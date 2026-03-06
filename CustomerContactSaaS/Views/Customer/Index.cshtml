@@ -1,0 +1,32 @@
+@model IEnumerable<CustomerContactSaaS.Models.Customer>
+
+<h2>Danh sách Khách hàng</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Thêm khách hàng mới</a>
+</p>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Full Name</th>
+            <th>Address</th>
+            <th>Phone Number</th>
+            <th>Email Address</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.FullName</td>
+            <td>@item.Address</td>
+            <td>@item.PhoneNumber</td>
+            <td>@item.EmailAddress</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id">Sửa</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id">Xóa</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
