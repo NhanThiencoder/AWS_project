@@ -1,57 +1,57 @@
 using Microsoft.AspNetCore.Mvc;
-using CustomerContactSaaS.Data;
-using CustomerContactSaaS.Models;
-using CustomerContactSaaS.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using CustomerContactSaaS.Data;
+using CustomerContactSaaS.Services.Interfaces;
 
 namespace CustomerContactSaaS.Controllers
 {
     public class CommunicationController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly ISmsService _smsService;
         private readonly IEmailService _emailService;
+        private readonly ISmsService _smsService;
 
-        // Tiêm (Inject) DbContext và các AWS Services vào
-        public CommunicationController(ApplicationDbContext context, ISmsService smsService, IEmailService emailService)
+        public CommunicationController(ApplicationDbContext context, IEmailService emailService, ISmsService smsService)
         {
             _context = context;
-            _smsService = smsService;
             _emailService = emailService;
+            _smsService = smsService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendMessage(CommunicationViewModel model)
+        public async Task<IActionResult> SendMessage(List<int> SelectedCustomerIds, string CommunicationType, string Subject, string MessageBody)
         {
-            if (model.SelectedCustomerIds == null || !model.SelectedCustomerIds.Any())
+            // Kiểm tra xem user có chọn khách hàng nào chưa
+            if (SelectedCustomerIds == null || !SelectedCustomerIds.Any())
             {
-                TempData["Error"] = "Vui lòng chọn ít nhất một khách hàng.";
+                TempData["ErrorMessage"] = "Vui lòng chọn ít nhất 1 khách hàng để gửi!";
                 return RedirectToAction("Index", "Customer");
             }
 
-            // Lấy thông tin các khách hàng được chọn từ Database
-            var customers = await _context.Customers
-                .Where(c => model.SelectedCustomerIds.Contains(c.Id))
-                .ToListAsync();
-
             int successCount = 0;
+
+            // Lấy danh sách khách hàng từ Database dựa vào các ID được tích chọn
+            var customers = await _context.Customers
+                .Where(c => SelectedCustomerIds.Contains(c.Id))
+                .ToListAsync();
 
             foreach (var customer in customers)
             {
-                bool isSent = false;
-                if (model.CommunicationType == "SMS" && !string.IsNullOrEmpty(customer.PhoneNumber))
+                if (CommunicationType == "Email")
                 {
-                    isSent = await _smsService.SendSmsAsync(customer.PhoneNumber, model.MessageBody);
+                    // Gọi hàm gửi Email qua AWS SES
+                    bool isSent = await _emailService.SendEmailAsync(customer.EmailAddress, Subject, MessageBody);
+                    if (isSent) successCount++;
                 }
-                else if (model.CommunicationType == "Email" && !string.IsNullOrEmpty(customer.EmailAddress))
+                else if (CommunicationType == "SMS")
                 {
-                    isSent = await _emailService.SendEmailAsync(customer.EmailAddress, model.Subject, model.MessageBody);
+                    // Tạm thời bỏ qua SMS vì đang lỗi Sandbox, nếu mượt Email thì ta xử SMS sau
+                    bool isSent = await _smsService.SendSmsAsync(customer.PhoneNumber, MessageBody);
+                    if (isSent) successCount++;
                 }
-
-                if (isSent) successCount++;
             }
 
-            TempData["Success"] = $"Đã gửi thành công {successCount}/{customers.Count} tin nhắn.";
+            TempData["SuccessMessage"] = $"Đã gửi thành công {successCount}/{customers.Count} tin nhắn {CommunicationType} qua AWS!";
             return RedirectToAction("Index", "Customer");
         }
     }

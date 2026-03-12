@@ -4,6 +4,7 @@ using CustomerContactSaaS.Services.Interfaces;
 using CustomerContactSaaS.Services.AWSServices;
 using Amazon.SimpleEmail;
 using Amazon.SimpleNotificationService;
+using Amazon.Runtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 2. Thêm AWS Services
+var awsAccessKey = builder.Configuration["AWS:AccessKey"];
+var awsSecretKey = builder.Configuration["AWS:SecretKey"];
+var credentials = new BasicAWSCredentials(awsAccessKey, awsSecretKey);
+
+var awsOptions = builder.Configuration.GetAWSOptions();
+awsOptions.Credentials = credentials;
+builder.Services.AddDefaultAWSOptions(awsOptions);
+
 builder.Services.AddAWSService<IAmazonSimpleEmailService>();
 builder.Services.AddAWSService<IAmazonSimpleNotificationService>();
 

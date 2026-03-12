@@ -1,32 +1,190 @@
 @model IEnumerable<CustomerContactSaaS.Models.Customer>
-
-<h2>Danh sách Khách hàng</h2>
-
-<p>
-    <a asp-action="Create" class="btn btn-primary">Thêm khách hàng mới</a>
-</p>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Full Name</th>
-            <th>Address</th>
-            <th>Phone Number</th>
-            <th>Email Address</th>
-            <th>Thao tác</th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>@item.FullName</td>
-            <td>@item.Address</td>
-            <td>@item.PhoneNumber</td>
-            <td>@item.EmailAddress</td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Sửa</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Xóa</a>
-            </td>
-        </tr>
+@{
+    Layout = null; 
 }
-    </tbody>
-</table>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khách hàng - CloudContact SaaS</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
+</head>
+<body>
+
+<nav class="navbar custom-header shadow-sm mb-4" style="background-color: #0f172a;">
+    <div class="container-fluid px-4 py-1">
+        <span class="navbar-brand mb-0 h1 fw-bold fs-4 d-flex align-items-center text-white">
+            <i class="fas fa-cloud text-info me-2 fs-3"></i>
+            CloudContact<span class="text-info ms-1">SaaS</span>
+        </span>
+        <div class="d-flex align-items-center">
+            <span class="badge bg-warning text-dark me-3">
+                <i class="fas fa-server me-1"></i> Hi AWS
+            </span>
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold;">TP</div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid px-xl-5 pb-5">
+    <div class="row g-4">
+        
+        <div class="col-lg-8 d-flex flex-column gap-3">
+            <div class="card border-0 shadow-sm rounded-3 p-3 d-flex flex-row justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold text-dark d-flex align-items-center">
+                    <i class="fas fa-users text-primary me-2"></i> Danh bạ Khách hàng (@Model.Count())
+                </h5>
+                <a href="/Customer/Create" class="btn btn-primary btn-sm fw-medium px-3 rounded-2 shadow-sm">
+                    <i class="fas fa-plus me-1"></i> Thêm mới
+                </a>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-3 flex-grow-1 mt-3">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-4" style="width: 50px;">
+                                    <input class="form-check-input" type="checkbox" id="checkAll">
+                                </th>
+                                <th scope="col">Họ và Tên</th>
+                                <th scope="col">Liên hệ</th>
+                                <th scope="col">Địa chỉ</th>
+                                <th scope="col" class="text-end pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model) {
+                                <tr>
+                                    <td class="ps-4">
+                                        <input class="form-check-input cust-checkbox" type="checkbox" value="@item.Id" name="selectedCustomers">
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">@item.FullName</div>
+                                    </td>
+                                    <td>
+                                        <div class="small text-muted"><i class="fas fa-envelope me-1"></i> @item.EmailAddress</div>
+                                        <div class="small text-muted"><i class="fas fa-phone me-1"></i> @item.PhoneNumber</div>
+                                    </td>
+                                    <td>
+                                        <span class="small text-muted">@item.Address</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="/Customer/Edit/@item.Id" class="btn btn-sm btn-outline-primary"><i class="fas fa-pen"></i></a>
+                                        <a href="/Customer/Delete/@item.Id" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 d-flex flex-column gap-3">
+            <div class="card border-0 shadow-sm rounded-3 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="m-0 fw-bold text-dark">Gửi thông báo</h5>
+                    <span class="badge bg-light text-dark border px-2 py-1" id="selectedBadge">
+                        Đã chọn: <span id="selectedCount">0</span>
+                    </span>
+                </div>
+
+                <form action="/Communication/SendMessage" method="post" id="sendMessageForm">
+                    <div id="hiddenInputsContainer"></div> 
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-2">Hình thức (AWS Integration)</label>
+                        <div class="d-flex gap-2">
+                            <input type="radio" class="btn-check" name="CommunicationType" id="typeEmail" value="Email" checked>
+                            <label class="btn btn-outline-primary flex-fill fw-medium py-2" for="typeEmail"><i class="fas fa-envelope me-1"></i> SES Email</label>
+                            
+                            <input type="radio" class="btn-check" name="CommunicationType" id="typeSMS" value="SMS">
+                            <label class="btn btn-outline-primary flex-fill fw-medium py-2" for="typeSMS"><i class="fas fa-sms me-1"></i> SNS SMS</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="subjectWrapper">
+                        <label class="form-label text-muted small fw-semibold">Tiêu đề Email</label>
+                        <input type="text" name="Subject" class="form-control rounded-2" placeholder="Nhập tiêu đề...">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted small fw-semibold" id="contentLabel">Nội dung</label>
+                        <textarea name="MessageBody" class="form-control rounded-2" rows="4" placeholder="Nhập nội dung cần gửi..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
+                        Phát lệnh Gửi
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.cust-checkbox');
+        const checkAll = document.getElementById('checkAll');
+        const countDisplay = document.getElementById('selectedCount');
+        const container = document.getElementById('hiddenInputsContainer');
+
+        function updateSelected() {
+            container.innerHTML = '';
+            let count = 0;
+            checkboxes.forEach(cb => {
+                if(cb.checked) {
+                    count++;
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'SelectedCustomerIds';
+                    input.value = cb.value;
+                    container.appendChild(input);
+                }
+            });
+            countDisplay.innerText = count;
+        }
+
+        checkAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateSelected();
+        });
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateSelected);
+        });
+    });
+</script>
+
+<script src="~/js/script.js" asp-append-version="true"></script>
+@if (TempData["SuccessMessage"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            showAlert('@TempData["SuccessMessage"]', true);
+        });
+    </script>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            showAlert('@TempData["ErrorMessage"]', false);
+        });
+    </script>
+}
+
+</body>
+</html>

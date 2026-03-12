@@ -8,7 +8,7 @@ namespace CustomerContactSaaS.Services.AWSServices
     {
         private readonly IAmazonSimpleEmailService _sesClient;
         // Chú ý: Cần verify email này trên AWS SES console trước khi gửi
-        private readonly string _senderEmail = "your-verified-email@example.com";
+        private readonly string _senderEmail = "nhanthien12721281@gmail.com";
 
         public SesEmailService(IAmazonSimpleEmailService sesClient)
         {
@@ -34,7 +34,7 @@ namespace CustomerContactSaaS.Services.AWSServices
             }
             catch (Exception ex)
             {
-                // Log lỗi ở đây (CloudWatch)
+                Console.WriteLine($"Lỗi gửi Email: {ex.Message}");
                 return false;
             }
         }
