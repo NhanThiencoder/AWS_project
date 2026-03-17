@@ -1,6 +1,6 @@
 # ☁️ SaaS Customer Contact Management - AWS Cloud Native
 
-![.NET Core](https://img.shields.io/badge/.NET%20Core-8.0-blue)
+![.NET Core](https://img.shields.io/badge/.NET%20Core-10.0-blue)
 ![AWS EC2](https://img.shields.io/badge/Amazon%20AWS-EC2-FF9900?logo=amazonaws)
 ![AWS RDS](https://img.shields.io/badge/Amazon%20AWS-RDS-527FFF?logo=amazonaws)
 ![AWS SES](https://img.shields.io/badge/Amazon%20AWS-SES-DD344C?logo=amazonaws)
