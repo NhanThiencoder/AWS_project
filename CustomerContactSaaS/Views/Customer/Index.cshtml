@@ -1,6 +1,6 @@
 @model IEnumerable<CustomerContactSaaS.Models.Customer>
 @{
-    Layout = null; 
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -8,183 +8,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Khách hàng - CloudContact SaaS</title>
-    
+    <title>SaaS Cloud - AWS Customer Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
 </head>
 <body>
-
-<nav class="navbar custom-header shadow-sm mb-4" style="background-color: #0f172a;">
-    <div class="container-fluid px-4 py-1">
-        <span class="navbar-brand mb-0 h1 fw-bold fs-4 d-flex align-items-center text-white">
-            <i class="fas fa-cloud text-info me-2 fs-3"></i>
-            CloudContact<span class="text-info ms-1">SaaS</span>
-        </span>
-        <div class="d-flex align-items-center">
-            <span class="badge bg-warning text-dark me-3">
-                <i class="fas fa-server me-1"></i> Hi AWS
-            </span>
-            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold;">TP</div>
-        </div>
-    </div>
-</nav>
-
-<div class="container-fluid px-xl-5 pb-5">
-    <div class="row g-4">
-        
-        <div class="col-lg-8 d-flex flex-column gap-3">
-            <div class="card border-0 shadow-sm rounded-3 p-3 d-flex flex-row justify-content-between align-items-center">
-                <h5 class="m-0 fw-bold text-dark d-flex align-items-center">
-                    <i class="fas fa-users text-primary me-2"></i> Danh bạ Khách hàng (@Model.Count())
-                </h5>
-                <a href="/Customer/Create" class="btn btn-primary btn-sm fw-medium px-3 rounded-2 shadow-sm">
-                    <i class="fas fa-plus me-1"></i> Thêm mới
-                </a>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fas fa-cloud logo-icon"></i> CloudSaaS
             </div>
+            <button class="btn-add-main" onclick="openCustomerModal()">
+                <i class="fas fa-plus"></i> Thêm Khách hàng
+            </button>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="fas fa-users"></i> Quản lý Khách hàng
+                    </a>
+                </li>
+            </ul>
+            <a href="#" class="power-btn" title="Đăng xuất"><i class="fas fa-power-off"></i></a>
+        </aside>
 
-            <div class="card border-0 shadow-sm rounded-3 flex-grow-1 mt-3">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" class="ps-4" style="width: 50px;">
-                                    <input class="form-check-input" type="checkbox" id="checkAll">
-                                </th>
-                                <th scope="col">Họ và Tên</th>
-                                <th scope="col">Liên hệ</th>
-                                <th scope="col">Địa chỉ</th>
-                                <th scope="col" class="text-end pe-4">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model) {
+        <div class="main-wrapper">
+            <header class="top-header">
+                <div class="search-wrapper">
+                    <i class="fas fa-search text-muted"></i>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên, email, sđt...">
+                </div>
+                <div class="header-tools">
+                    <span class="date-text d-none d-md-block" id="currentDate"></span>
+                    <div class="bell-icon">
+                        <i class="far fa-bell"></i>
+                        <span class="badge bg-primary rounded-circle">2</span>
+                    </div>
+                    <div class="user-profile">
+                        <div><div style="font-weight: 700; font-size: 0.95rem;">Admin System</div></div>
+                        <span class="role-badge">AD</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-scrollable">
+                <div class="main-grid-area">
+                    <h1 class="page-title">Quản lý Khách hàng</h1>
+                    <ul class="nav nav-tabs">
+                        <li class="nav-item"><a class="nav-link active" href="#">Tất cả khách hàng</a></li>
+                    </ul>
+                    <div class="filter-toolbar">
+                        <button class="btn-select-all" id="btnSelectAll" onclick="toggleSelectAll()">
+                            <i class="fas fa-check-square me-2 text-primary"></i> Chọn tất cả
+                        </button>
+                        <div class="d-flex align-items-center gap-2">
+                            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Sắp xếp:</span>
+                            <select class="form-select border-0 bg-white fw-bold shadow-sm" style="width: auto; border-radius: 8px;">
+                                <option>Mới nhất</option>
+                                <option>Tên A-Z</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive bg-white rounded-4 shadow-sm border border-light mt-3">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light text-muted" style="font-size: 0.85rem; text-transform: uppercase;">
                                 <tr>
-                                    <td class="ps-4">
-                                        <input class="form-check-input cust-checkbox" type="checkbox" value="@item.Id" name="selectedCustomers">
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold text-dark">@item.FullName</div>
-                                    </td>
-                                    <td>
-                                        <div class="small text-muted"><i class="fas fa-envelope me-1"></i> @item.EmailAddress</div>
-                                        <div class="small text-muted"><i class="fas fa-phone me-1"></i> @item.PhoneNumber</div>
-                                    </td>
-                                    <td>
-                                        <span class="small text-muted">@item.Address</span>
-                                    </td>
-                                    <td class="text-end pe-4">
-                                        <a href="/Customer/Edit/@item.Id" class="btn btn-sm btn-outline-primary"><i class="fas fa-pen"></i></a>
-                                        <a href="/Customer/Delete/@item.Id" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a>
-                                    </td>
+                                    <th scope="col" class="ps-4" style="width: 60px;">Chọn</th>
+                                    <th scope="col">Khách hàng</th>
+                                    <th scope="col">Thông tin liên hệ</th>
+                                    <th scope="col">Địa chỉ</th>
+                                    <th scope="col" class="text-end pe-4">Thao tác</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 d-flex flex-column gap-3">
-            <div class="card border-0 shadow-sm rounded-3 p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="m-0 fw-bold text-dark">Gửi thông báo</h5>
-                    <span class="badge bg-light text-dark border px-2 py-1" id="selectedBadge">
-                        Đã chọn: <span id="selectedCount">0</span>
-                    </span>
+                            </thead>
+                            <tbody id="customerTableBody">
+                                </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <form action="/Communication/SendMessage" method="post" id="sendMessageForm">
-                    <div id="hiddenInputsContainer"></div> 
-
-                    <div class="mb-3">
-                        <label class="form-label text-muted small fw-semibold mb-2">Hình thức (AWS Integration)</label>
-                        <div class="d-flex gap-2">
-                            <input type="radio" class="btn-check" name="CommunicationType" id="typeEmail" value="Email" checked>
-                            <label class="btn btn-outline-primary flex-fill fw-medium py-2" for="typeEmail"><i class="fas fa-envelope me-1"></i> SES Email</label>
-                            
-                            <input type="radio" class="btn-check" name="CommunicationType" id="typeSMS" value="SMS">
-                            <label class="btn btn-outline-primary flex-fill fw-medium py-2" for="typeSMS"><i class="fas fa-sms me-1"></i> SNS SMS</label>
+                <div class="right-panel-area">
+                    <div class="stat-card">
+                        <div class="stat-card-title"><i class="fas fa-chart-pie"></i> Tương tác KH</div>
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <div class="stat-label">TỔNG SỐ KH</div>
+                                <div class="stat-value" id="statTotal">0</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-label">ĐANG CHỌN</div>
+                                <div class="stat-value highlight" id="statSelected">0</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3" id="subjectWrapper">
-                        <label class="form-label text-muted small fw-semibold">Tiêu đề Email</label>
-                        <input type="text" name="Subject" class="form-control rounded-2" placeholder="Nhập tiêu đề...">
+                    <div class="stat-card aws-panel">
+                        <div class="stat-card-title">
+                            <i class="fas fa-paper-plane" style="color: var(--text-main);"></i> AWS Emitter Panel
+                        </div>
+                        <form id="sendMessageForm">
+                            <div class="aws-tabs">
+                                <div class="aws-tab-btn active" onclick="setAwsMode('SES')" id="tabSES"><i class="fas fa-envelope me-1"></i> Amazon SES</div>
+                                <div class="aws-tab-btn" onclick="setAwsMode('SNS')" id="tabSNS"><i class="fas fa-sms me-1"></i> Amazon SNS</div>
+                            </div>
+                            <input type="hidden" id="awsMode" value="SES">
+                            <div class="mb-3" id="subjectWrapper">
+                                <label class="aws-form-label">Tiêu đề (Email)</label>
+                                <input type="text" id="msgSubject" class="aws-input" placeholder="Nhập tiêu đề...">
+                            </div>
+                            <div class="mb-2">
+                                <label class="aws-form-label" id="contentLabel">Nội dung tin nhắn</label>
+                                <textarea id="msgContent" class="aws-input" rows="5" placeholder="Nhập nội dung cần gửi..."></textarea>
+                            </div>
+                            <button type="button" class="btn-send" id="btnSend" disabled>
+                                <i class="fas fa-cloud-upload-alt me-2"></i> Gửi cho <span id="btnSendCount">0</span> người
+                            </button>
+                        </form>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <div class="mb-4">
-                        <label class="form-label text-muted small fw-semibold" id="contentLabel">Nội dung</label>
-                        <textarea name="MessageBody" class="form-control rounded-2" rows="4" placeholder="Nhập nội dung cần gửi..."></textarea>
+    <div class="modal fade" id="customerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modalTitle">Thêm Khách hàng</h4>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="customerForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="custId">
+                        <input type="hidden" id="custAvatar"> 
+                        <div class="mb-3">
+                            <label class="aws-form-label">Ảnh đại diện</label>
+                            <div class="avatar-preview-box">
+                                <div id="formAvatarPreview" class="avatar-preview-circle bg-secondary">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-dark" style="font-size: 0.9rem;">Avatar hiện tại</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">Có thể dùng Initials hoặc chọn ảnh</div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-bold" onclick="openAvatarSelector()">Thay đổi</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="aws-form-label">Họ và tên *</label>
+                            <input type="text" class="aws-input" id="custName" required placeholder="Nhập họ tên đầy đủ">
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="aws-form-label">Email *</label>
+                                <input type="email" class="aws-input" id="custEmail" required placeholder="name@domain.com">
+                            </div>
+                            <div class="col-6">
+                                <label class="aws-form-label">Số điện thoại *</label>
+                                <input type="tel" class="aws-input" id="custPhone" required placeholder="0901234567">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="aws-form-label">Địa chỉ *</label>
+                            <input type="text" class="aws-input" id="custAddress" required placeholder="Tỉnh/Thành phố...">
+                        </div>
+                        <div class="mb-2">
+                            <label class="aws-form-label">Nhóm / Vai trò</label>
+                            <input type="text" class="aws-input" id="custRole" placeholder="VD: Khách hàng cá nhân, Doanh nghiệp...">
+                        </div>
                     </div>
-
-                    <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">
-                        Phát lệnh Gửi
-                    </button>
+                    <div class="modal-footer d-flex gap-2">
+                        <button type="button" class="btn btn-light rounded-3 fw-bold px-4 py-2" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary rounded-3 fw-bold px-4 py-2 flex-grow-1" style="background-color: var(--primary-color); border:none;" id="btnSaveCustomer">Lưu dữ liệu</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="modal fade" id="avatarSelectorModal" tabindex="-1" style="z-index: 1060;"> 
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
+            <div class="modal-content shadow-lg text-center" style="border-radius: 24px; padding: 1rem;">
+                <div class="modal-body">
+                    <h5 class="fw-bold mb-2 text-dark" style="font-size: 1.2rem;">Choose your avatar</h5>
+                    <div style="height: 3px; background: linear-gradient(90deg, #fbcfe8, #a78bfa, #6ee7b7); width: 120px; margin: 0 auto 1.5rem auto; border-radius: 3px;"></div>
+                    <div class="avatar-choice-grid" id="avatarOptionsContainer"></div>
+                    <button type="button" class="btn btn-outline-dark rounded-pill w-100 py-2 mt-3" style="font-weight: 700; border: 2px solid #e2e8f0; color: #334155;" onclick="confirmAvatarSelection()">Select</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const checkboxes = document.querySelectorAll('.cust-checkbox');
-        const checkAll = document.getElementById('checkAll');
-        const countDisplay = document.getElementById('selectedCount');
-        const container = document.getElementById('hiddenInputsContainer');
+    <div class="modal fade" id="msgBoxModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-body text-center p-5">
+                    <i id="msgBoxIcon" class="fas fa-check-circle text-success mb-4" style="font-size: 4rem;"></i>
+                    <h5 class="fw-bold text-dark mb-3">System Log</h5>
+                    <div id="msgBoxText" class="text-secondary text-start p-3 bg-light rounded-3" style="white-space: pre-wrap; font-size: 0.9rem; font-family: monospace;"></div>
+                    <button type="button" class="btn btn-primary px-5 py-2 mt-4 fw-bold rounded-pill" data-bs-dismiss="modal" style="background-color: var(--primary-color); border:none;">Đã hiểu</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        function updateSelected() {
-            container.innerHTML = '';
-            let count = 0;
-            checkboxes.forEach(cb => {
-                if(cb.checked) {
-                    count++;
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'SelectedCustomerIds';
-                    input.value = cb.value;
-                    container.appendChild(input);
-                }
-            });
-            countDisplay.innerText = count;
-        }
-
-        checkAll.addEventListener('change', function() {
-            checkboxes.forEach(cb => cb.checked = this.checked);
-            updateSelected();
-        });
-
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', updateSelected);
-        });
-    });
-</script>
-
-<script src="~/js/script.js" asp-append-version="true"></script>
-@if (TempData["SuccessMessage"] != null)
-{
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            showAlert('@TempData["SuccessMessage"]', true);
-        });
+        let customers = [
+            @foreach (var item in Model)
+            {
+                <text>
+                {
+                    id: @item.Id,
+                    name: "@Html.Raw(item.FullName)",
+                    phone: "@Html.Raw(item.PhoneNumber)",
+                    email: "@Html.Raw(item.EmailAddress)",
+                    address: "@Html.Raw(item.Address)",
+                    role: "Khách hàng", // Tạm mặc định vì Database cũ chưa có cột Role
+                    avatar: null // Tạm mặc định vì Database cũ chưa lưu Link Avatar
+                },
+                </text>
+            }
+        ];
     </script>
-}
-@if (TempData["ErrorMessage"] != null)
-{
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            showAlert('@TempData["ErrorMessage"]', false);
-        });
-    </script>
-}
-
+    <script src="~/js/script.js" asp-append-version="true"></script>
 </body>
 </html>

@@ -97,5 +97,67 @@ namespace CustomerContactSaaS.Controllers
 			}
 			return RedirectToAction(nameof(Index));
 		}
-	}
+        // ==========================================
+        // CÁC HÀM XỬ LÝ AJAX CHO GIAO DIỆN MỚI
+        // ==========================================
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAjax([FromBody] Customer customer)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Add(customer);
+                await _context.SaveChangesAsync();
+                // Trả về ID mới tạo để JS cập nhật giao diện
+                return Json(new { success = true, newId = customer.Id });
+            }
+
+            // Nếu lỗi validate (thiếu trường bắt buộc...)
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            return Json(new { success = false, message = string.Join("; ", errors) });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditAjax([FromBody] Customer customer)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(customer);
+                    await _context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // SỬA Ở ĐÂY: Dùng _context.Customers.Any thay vì gọi hàm CustomerExists
+                    if (!_context.Customers.Any(e => e.Id == customer.Id))
+                    {
+                        return Json(new { success = false, message = "Không tìm thấy khách hàng trong CSDL!" });
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+            return Json(new { success = false, message = "Dữ liệu gửi lên không hợp lệ!" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteAjax(int id)
+        {
+            // SỬA Ở ĐÂY: Thêm chữ 's' vào _context.Customers
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null)
+            {
+                return Json(new { success = false, message = "Khách hàng không tồn tại hoặc đã bị xóa!" });
+            }
+
+            // SỬA Ở ĐÂY: Thêm chữ 's' vào _context.Customers
+            _context.Customers.Remove(customer);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+    }
 }
