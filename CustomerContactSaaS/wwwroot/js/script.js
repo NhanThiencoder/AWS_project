@@ -277,49 +277,54 @@ window.deleteCustomer = function (id) {
 
 // --- GỌI API AWS THẬT ---
 document.getElementById('btnSend').addEventListener('click', function () {
-    const mode = document.getElementById('awsMode').value;
-    const subject = document.getElementById('msgSubject').value;
-    const content = document.getElementById('msgContent').value;
+    document.getElementById('btnSend').addEventListener('click', function () {
+        const mode = document.getElementById('awsMode').value;
+        const subject = document.getElementById('msgSubject').value;
+        const content = document.getElementById('msgContent').value;
 
-    if (mode === 'SES' && !subject.trim()) return showAlert('Lỗi: AWS SES yêu cầu Tiêu đề Email.', false);
-    if (!content.trim()) return showAlert('Lỗi: Nội dung tin nhắn không được để trống.', false);
-    if (selectedIds.length === 0) return showAlert('Lỗi: Vui lòng chọn ít nhất 1 khách hàng.', false);
+        if (mode === 'SES' && !subject.trim()) return showAlert('Lỗi: AWS SES yêu cầu Tiêu đề Email.', false);
+        if (!content.trim()) return showAlert('Lỗi: Nội dung tin nhắn không được để trống.', false);
+        if (selectedIds.length === 0) return showAlert('Lỗi: Vui lòng chọn ít nhất 1 khách hàng.', false);
 
-    // Đổi chữ trên nút để báo hiệu đang chạy
-    const btnSend = document.getElementById('btnSend');
-    const originalText = btnSend.innerHTML;
-    btnSend.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang kết nối AWS...';
-    btnSend.disabled = true;
+        // Lưu lại UI gốc của nút Gửi
+        const btnSend = document.getElementById('btnSend');
+        const originalText = btnSend.innerHTML;
 
-    // Gọi AJAX về CommunicationController
-    fetch('/Communication/SendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            Mode: mode,
-            Subject: subject,
-            Content: content,
-            SelectedCustomerIds: selectedIds
+        // Đổi nút thành trạng thái Loading
+        btnSend.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang kết nối AWS...';
+        btnSend.disabled = true;
+
+        // Gọi AJAX về CommunicationController
+        fetch('/Communication/SendMessage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                Mode: mode,
+                Subject: subject,
+                Content: content,
+                SelectedCustomerIds: selectedIds
+            })
         })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showAlert(data.message, true); // Hiện bảng log xanh lá báo MessageId của AWS
-                document.getElementById('sendMessageForm').reset();
-                selectedIds = [];
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(data.message, true);
+                    document.getElementById('sendMessageForm').reset();
+                    selectedIds = [];
+                    // ĐÃ XÓA renderTable() ở đây để tránh lỗi null
+                } else {
+                    showAlert(data.message, false);
+                }
+            })
+            .catch(error => showAlert('Lỗi hệ thống: ' + error, false))
+            .finally(() => {
+                // Bước 1: Trả lại nút Gửi như cũ (Khôi phục thẻ span bị mất)
+                btnSend.innerHTML = originalText;
+
+                // Bước 2: Bây giờ thẻ span đã tồn tại, ta mới cập nhật bảng an toàn
                 renderTable();
-            } else {
-                showAlert(data.message, false); // Hiện bảng log đỏ nếu lỗi
-            }
-        })
-        .catch(error => showAlert('Lỗi hệ thống: ' + error, false))
-        .finally(() => {
-            // Trả lại nút Gửi như cũ
-            btnSend.innerHTML = originalText;
-            updatePanelStatus();
-        });
-});
+            });
+    });
 
 // Khởi động
 renderTable();
