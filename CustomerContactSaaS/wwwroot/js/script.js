@@ -277,54 +277,55 @@ window.deleteCustomer = function (id) {
 
 // --- GỌI API AWS THẬT ---
 document.getElementById('btnSend').addEventListener('click', function () {
-    document.getElementById('btnSend').addEventListener('click', function () {
-        const mode = document.getElementById('awsMode').value;
-        const subject = document.getElementById('msgSubject').value;
-        const content = document.getElementById('msgContent').value;
+    const mode = document.getElementById('awsMode').value;
+    const subject = document.getElementById('msgSubject').value;
+    const content = document.getElementById('msgContent').value;
 
-        if (mode === 'SES' && !subject.trim()) return showAlert('Lỗi: AWS SES yêu cầu Tiêu đề Email.', false);
-        if (!content.trim()) return showAlert('Lỗi: Nội dung tin nhắn không được để trống.', false);
-        if (selectedIds.length === 0) return showAlert('Lỗi: Vui lòng chọn ít nhất 1 khách hàng.', false);
+    if (mode === 'SES' && !subject.trim()) return showAlert('Lỗi: AWS SES yêu cầu Tiêu đề Email.', false);
+    if (!content.trim()) return showAlert('Lỗi: Nội dung tin nhắn không được để trống.', false);
+    if (selectedIds.length === 0) return showAlert('Lỗi: Vui lòng chọn ít nhất 1 khách hàng.', false);
 
-        // Lưu lại UI gốc của nút Gửi
-        const btnSend = document.getElementById('btnSend');
-        const originalText = btnSend.innerHTML;
+    // Lưu lại UI gốc của nút Gửi
+    const btnSend = document.getElementById('btnSend');
+    const originalText = btnSend.innerHTML;
 
-        // Đổi nút thành trạng thái Loading
-        btnSend.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang kết nối AWS...';
-        btnSend.disabled = true;
+    // Đổi nút thành trạng thái Loading
+    btnSend.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang kết nối AWS...';
+    btnSend.disabled = true;
 
-        // Gọi AJAX về CommunicationController
-        fetch('/Communication/SendMessage', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                Mode: mode,
-                Subject: subject,
-                Content: content,
-                SelectedCustomerIds: selectedIds
-            })
+    // Gọi AJAX về CommunicationController
+    fetch('/Communication/SendMessage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            Mode: mode,
+            Subject: subject,
+            Content: content,
+            SelectedCustomerIds: selectedIds
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert(data.message, true);
-                    document.getElementById('sendMessageForm').reset();
-                    selectedIds = [];
-                    // ĐÃ XÓA renderTable() ở đây để tránh lỗi null
-                } else {
-                    showAlert(data.message, false);
-                }
-            })
-            .catch(error => showAlert('Lỗi hệ thống: ' + error, false))
-            .finally(() => {
-                // Bước 1: Trả lại nút Gửi như cũ (Khôi phục thẻ span bị mất)
-                btnSend.innerHTML = originalText;
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, true);
+                document.getElementById('sendMessageForm').reset();
+                selectedIds = [];
+            } else {
+                showAlert(data.message, false);
+            }
+        })
+        .catch(error => showAlert('Lỗi hệ thống: ' + error, false))
+        .finally(() => {
+            // Bước 1: Trả lại nút Gửi như cũ (Khôi phục thẻ span bị mất)
+            btnSend.innerHTML = originalText;
 
-                // Bước 2: Bây giờ thẻ span đã tồn tại, ta mới cập nhật bảng an toàn
-                renderTable();
-            });
-    });
+            // Bước 2: Bây giờ thẻ span đã tồn tại, ta mới cập nhật bảng an toàn
+            renderTable();
+        });
+});
+
+// Khởi động
+renderTable();
 
 // Khởi động
 renderTable();
