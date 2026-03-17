@@ -1,58 +1,81 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CustomerContactSaaS.Data;
-using CustomerContactSaaS.Services.Interfaces;
+using Amazon.SimpleEmail;
+using Amazon.SimpleEmail.Model;
 
 namespace CustomerContactSaaS.Controllers
 {
     public class CommunicationController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly IEmailService _emailService;
-        private readonly ISmsService _smsService;
 
-        public CommunicationController(ApplicationDbContext context, IEmailService emailService, ISmsService smsService)
+        public CommunicationController(ApplicationDbContext context)
         {
             _context = context;
-            _emailService = emailService;
-            _smsService = smsService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendMessage(List<int> SelectedCustomerIds, string CommunicationType, string Subject, string MessageBody)
+        public async Task<IActionResult> SendMessage([FromBody] SendMessageRequest request)
         {
-            // Kiểm tra xem user có chọn khách hàng nào chưa
-            if (SelectedCustomerIds == null || !SelectedCustomerIds.Any())
-            {
-                TempData["ErrorMessage"] = "Vui lòng chọn ít nhất 1 khách hàng để gửi!";
-                return RedirectToAction("Index", "Customer");
-            }
+            // Kiểm tra dữ liệu đầu vào
+            if (request.SelectedCustomerIds == null || !request.SelectedCustomerIds.Any())
+                return Json(new { success = false, message = "Lỗi: Chưa chọn khách hàng nào!" });
 
-            int successCount = 0;
-
-            // Lấy danh sách khách hàng từ Database dựa vào các ID được tích chọn
+            // Lấy danh sách Email từ Database
             var customers = await _context.Customers
-                .Where(c => SelectedCustomerIds.Contains(c.Id))
+                .Where(c => request.SelectedCustomerIds.Contains(c.Id))
                 .ToListAsync();
 
-            foreach (var customer in customers)
+            if (request.Mode == "SES")
             {
-                if (CommunicationType == "Email")
+                var emails = customers.Select(c => c.EmailAddress).Where(e => !string.IsNullOrEmpty(e)).ToList();
+                if (!emails.Any()) return Json(new { success = false, message = "Lỗi: Các khách hàng được chọn không có Email hợp lệ." });
+
+                try
                 {
-                    // Gọi hàm gửi Email qua AWS SES
-                    bool isSent = await _emailService.SendEmailAsync(customer.EmailAddress, Subject, MessageBody);
-                    if (isSent) successCount++;
+                    // Khởi tạo Client kết nối với AWS SES
+                    // LƯU Ý: Nếu AWS SES của bạn ở khu vực khác (như N. Virginia) thì đổi USWest1 thành USEast1
+                    using var client = new AmazonSimpleEmailServiceClient(Amazon.RegionEndpoint.USWest1);
+
+                    var sendRequest = new SendEmailRequest
+                    {
+                        // ĐÂY LÀ CHỖ QUAN TRỌNG: Sửa thành Email bạn đã Verify trên AWS SES
+                        Source = "nhanthien12721281@gmail.com",
+
+                        Destination = new Destination { ToAddresses = emails },
+                        Message = new Message
+                        {
+                            Subject = new Content(request.Subject),
+                            Body = new Body { Text = new Content(request.Content) }
+                        }
+                    };
+
+                    // Phát lệnh gửi thư
+                    var response = await client.SendEmailAsync(sendRequest);
+
+                    // Trả về JSON cho JS hiển thị bảng Log xanh lá
+                    return Json(new { success = true, message = $"[HỆ THỐNG AWS SES]\nĐã gửi thành công {emails.Count} email!\nMessageId: {response.MessageId}" });
                 }
-                else if (CommunicationType == "SMS")
+                catch (Exception ex)
                 {
-                    // Tạm thời bỏ qua SMS vì đang lỗi Sandbox, nếu mượt Email thì ta xử SMS sau
-                    bool isSent = await _smsService.SendSmsAsync(customer.PhoneNumber, MessageBody);
-                    if (isSent) successCount++;
+                    return Json(new { success = false, message = "Lỗi từ AWS SES: " + ex.Message });
                 }
             }
-
-            TempData["SuccessMessage"] = $"Đã gửi thành công {successCount}/{customers.Count} tin nhắn {CommunicationType} qua AWS!";
-            return RedirectToAction("Index", "Customer");
+            else
+            {
+                // SNS để dành phát triển sau
+                return Json(new { success = false, message = "Tính năng Amazon SNS đang được bảo trì." });
+            }
         }
+    }
+
+    // Class hứng dữ liệu JSON từ giao diện gửi lên
+    public class SendMessageRequest
+    {
+        public string Mode { get; set; }
+        public string Subject { get; set; }
+        public string Content { get; set; }
+        public List<int> SelectedCustomerIds { get; set; }
     }
 }
